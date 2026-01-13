@@ -38,27 +38,31 @@ export default async function handler(req, res) {
       });
     }
 
-    // 腾讯云云函数API地址 - 尝试不同的端点
-    const tencentApiUrl = 'https://cloudbase-8gvr5ezca651849d.ap-shanghai.tcb-api.tencentcloudapi.com/functions';
+    // 腾讯云云函数API地址 - 参考SDK调用方式
+    const tencentApiUrl = 'https://cloudbase-8gvr5ezca651849d.ap-shanghai.tcb-api.tencentcloudapi.com/';
 
-    // 构造请求参数 - 尝试不同的参数格式
-    const params = new URLSearchParams({
-      name: 'queryPart'
-    });
+    // 构造请求参数 - 模拟SDK的callFunction调用
+    const requestBody = {
+      action: 'functions.invokeFunction',
+      data: {
+        name: 'queryPart',
+        data: { traceCode }
+      }
+    };
 
-    const requestUrl = `${tencentApiUrl}?${params}`;
+    const requestUrl = `${tencentApiUrl}`;
 
     console.log('代理请求URL:', requestUrl);
-    console.log('请求数据:', JSON.stringify({ traceCode }));
+    console.log('请求数据:', JSON.stringify(requestBody));
 
-    // 发送请求到腾讯云API - 使用POST方法，数据在请求体中
+    // 发送请求到腾讯云API - 模拟SDK调用方式
     const response = await fetch(requestUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IjlkMWRjMzFlLWI0ZDAtNDQ4Yi1hNzZmLWIwY2M2M2Q4MTQ5OCJ9.eyJpc3MiOiJodHRwczovL2Nsb3VkYmFzZS04Z3ZyNWV6Y2E2NTE4NDlkLmFwLXNoYW5naGFpLnRjYi1hcGkudGVuY2VudGNsb3VkYXBpLmNvbSIsInN1YiI6ImFub24iLCJhdWQiOiJjbG91ZGJhc2UtOGd2cjVlemNhNjUxODQ5ZCIsImV4cCI6NDA3MTg2NDMyMSwiaWF0IjoxNzY4MTgxMTIxLCJub25jZSI6ImpSQU5INVhXUnJpRVUwTGxOaUdxRmciLCJhdF9oYXNoIjoialJBTkg1WFdScmlFVTBMbE5pR3FGZyIsIm5hbWUiOiJBbm9ueW1vdXMiLCJzY29wZSI6ImFub255bW91cyIsInByb2plY3RfaWQiOiJjbG91ZGJhc2UtOGd2cjVlemNhNjUxODQ5ZCIsInVzZXJfdHlwZSI6IiIsImNsaWVudF90eXBlIjoiY2xpZW50X3VzZXIiLCJpc19zeXN0ZW1fYWRtaW4iOmZhbHNlfQ.a4jxAwS2PBLlBYBkRQYfItebJY_SV2pkINsiBWbLESiBJyk2IxtjHeDPJrzwRC4j4DR1BJRasKxYxIvImX-rUQthBeDzi59nL2N5YkU9w_I5RkB_qX1bIkXMbAZcDnyHTOzG3sQmXg9Ow3YFBA86XE7zAbcM6jIZVgIqbykasvYjDMsZ1pG_ycYoX8offyiIxCeZn9ddjI0UKjeszaGZzrexg0b4G1-q59bCKOvs_ccM9MDBGGaUiY9kktHczSaM3npQWjr2pwTsRQuUoAUUifhMX9eLRFwljXIIwo2EwZ0axeeCh-MViFOAQuNJ30FEsls0k1A2pW89oO0fwA5w0w'
       },
-      body: JSON.stringify({ traceCode })
+      body: JSON.stringify(requestBody)
     });
 
     console.log('腾讯云API响应状态:', response.status);
