@@ -25,32 +25,32 @@ export default async function handler(req, res) {
     // 腾讯云云函数API地址
     const tencentApiUrl = 'https://cloudbase-8gvr5ezca651849d.ap-shanghai.tcb-api.tencentcloudapi.com/web';
 
-    // 构造请求参数
+    // 构造请求参数 - 根据腾讯云云开发的API格式
     const params = new URLSearchParams({
       env: 'cloudbase-8gvr5ezca651849d',
       action: 'functions.invokeFunction',
-      name: 'queryPart',
-      data: JSON.stringify({ traceCode })
+      name: 'queryPart'
     });
 
     const requestUrl = `${tencentApiUrl}?${params}`;
 
     console.log('代理请求URL:', requestUrl);
+    console.log('请求体:', JSON.stringify({ traceCode }));
 
     // 发送请求到腾讯云API
     const response = await fetch(requestUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        // 如果需要身份验证，可以在这里添加Authorization头
-        // 'Authorization': 'Bearer YOUR_TOKEN'
+        'Authorization': 'Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IjlkMWRjMzFlLWI0ZDAtNDQ4Yi1hNzZmLWIwY2M2M2Q4MTQ5OCJ9.eyJpc3MiOiJodHRwczovL2Nsb3VkYmFzZS04Z3ZyNWV6Y2E2NTE4NDlkLmFwLXNoYW5naGFpLnRjYi1hcGkudGVuY2VudGNsb3VkYXBpLmNvbSIsInN1YiI6ImFub24iLCJhdWQiOiJjbG91ZGJhc2UtOGd2cjVlemNhNjUxODQ5ZCIsImV4cCI6NDA3MTg2NDMyMSwiaWF0IjoxNzY4MTgxMTIxLCJub25jZSI6ImpSQU5INVhXUnJpRVUwTGxOaUdxRmciLCJhdF9oYXNoIjoialJBTkg1WFdScmlFVTBMbE5pR3FGZyIsIm5hbWUiOiJBbm9ueW1vdXMiLCJzY29wZSI6ImFub255bW91cyIsInByb2plY3RfaWQiOiJjbG91ZGJhc2UtOGd2cjVlemNhNjUxODQ5ZCIsInVzZXJfdHlwZSI6IiIsImNsaWVudF90eXBlIjoiY2xpZW50X3VzZXIiLCJpc19zeXN0ZW1fYWRtaW4iOmZhbHNlfQ.a4jxAwS2PBLlBYBkRQYfItebJY_SV2pkINsiBWbLESiBJyk2IxtjHeDPJrzwRC4j4DR1BJRasKxYxIvImX-rUQthBeDzi59nL2N5YkU9w_I5RkB_qX1bIkXMbAZcDnyHTOzG3sQmXg9Ow3YFBA86XE7zAbcM6jIZVgIqbykasvYjDMsZ1pG_ycYoX8offyiIxCeZn9ddjI0UKjeszaGZzrexg0b4G1-q59bCKOvs_ccM9MDBGGaUiY9kktHczSaM3npQWjr2pwTsRQuUoAUUifhMX9eLRFwljXIIwo2EwZ0axeeCh-MViFOAQuNJ30FEsls0k1A2pW89oO0fwA5w0w'
       },
-      // 如果腾讯云API需要请求体，可以在这里添加
-      // body: JSON.stringify({ traceCode })
+      body: JSON.stringify({ traceCode })
     });
 
     if (!response.ok) {
-      throw new Error(`腾讯云API响应错误: ${response.status}`);
+      const errorText = await response.text();
+      console.error('腾讯云API错误响应:', response.status, errorText);
+      throw new Error(`腾讯云API响应错误: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
