@@ -27,10 +27,42 @@ export default async function handler(req, res) {
   try {
     const { traceCode } = req.body;
 
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/ab452e10-c72f-4ade-943f-eaae55744408', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        location: 'query.js:request_start',
+        message: 'API请求开始',
+        data: { traceCode: traceCode ? 'present' : 'missing', method: req.method },
+        timestamp: Date.now(),
+        sessionId: 'debug-session',
+        runId: 'run1',
+        hypothesisId: 'A,B,C,D,E'
+      })
+    }).catch(() => {});
+    // #endregion
+
     console.log('接收到的请求体:', req.body);
     console.log('traceCode:', traceCode);
 
     if (!traceCode) {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/ab452e10-c72f-4ade-943f-eaae55744408', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: 'query.js:validation_failed',
+          message: 'traceCode验证失败',
+          data: { receivedBody: req.body },
+          timestamp: Date.now(),
+          sessionId: 'debug-session',
+          runId: 'run1',
+          hypothesisId: 'C'
+        })
+      }).catch(() => {});
+      // #endregion
+
       return res.status(400).json({
         error: 'traceCode is required',
         received: req.body,
@@ -52,6 +84,26 @@ export default async function handler(req, res) {
 
     const requestUrl = `${tencentApiUrl}`;
 
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/ab452e10-c72f-4ade-943f-eaae55744408', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        location: 'query.js:before_tencent_request',
+        message: '准备发送腾讯云请求',
+        data: {
+          url: requestUrl,
+          bodySize: JSON.stringify(requestBody).length,
+          hasAuth: true
+        },
+        timestamp: Date.now(),
+        sessionId: 'debug-session',
+        runId: 'run1',
+        hypothesisId: 'A,B,D,E'
+      })
+    }).catch(() => {});
+    // #endregion
+
     console.log('代理请求URL:', requestUrl);
     console.log('请求数据:', JSON.stringify(requestBody));
 
@@ -65,12 +117,44 @@ export default async function handler(req, res) {
       body: JSON.stringify(requestBody)
     });
 
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/ab452e10-c72f-4ade-943f-eaae55744408', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        location: 'query.js:after_tencent_request',
+        message: '腾讯云请求完成',
+        data: { status: response.status, ok: response.ok },
+        timestamp: Date.now(),
+        sessionId: 'debug-session',
+        runId: 'run1',
+        hypothesisId: 'A,D,E'
+      })
+    }).catch(() => {});
+    // #endregion
+
     console.log('腾讯云API响应状态:', response.status);
     console.log('腾讯云API响应头:', response.headers);
 
     if (!response.ok) {
       const errorText = await response.text();
       console.error('腾讯云API错误响应:', response.status, errorText);
+
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/ab452e10-c72f-4ade-943f-eaae55744408', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: 'query.js:tencent_api_error',
+          message: '腾讯云API返回错误',
+          data: { status: response.status, errorText: errorText.substring(0, 200) },
+          timestamp: Date.now(),
+          sessionId: 'debug-session',
+          runId: 'run1',
+          hypothesisId: 'A,B,C,D'
+        })
+      }).catch(() => {});
+      // #endregion
 
       // 如果腾讯云API失败，返回测试数据作为fallback
       console.log('使用测试数据作为fallback');
@@ -98,6 +182,22 @@ export default async function handler(req, res) {
 
     const data = await response.json();
 
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/ab452e10-c72f-4ade-943f-eaae55744408', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        location: 'query.js:tencent_success',
+        message: '腾讯云API调用成功',
+        data: { responseSize: JSON.stringify(data).length },
+        timestamp: Date.now(),
+        sessionId: 'debug-session',
+        runId: 'run1',
+        hypothesisId: 'A'
+      })
+    }).catch(() => {});
+    // #endregion
+
     console.log('腾讯云API响应数据:', data);
 
     // 返回结果
@@ -105,6 +205,22 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('Query API错误:', error);
+
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/ab452e10-c72f-4ade-943f-eaae55744408', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        location: 'query.js:exception_caught',
+        message: '捕获到异常',
+        data: { errorMessage: error.message, errorType: error.constructor.name },
+        timestamp: Date.now(),
+        sessionId: 'debug-session',
+        runId: 'run1',
+        hypothesisId: 'E'
+      })
+    }).catch(() => {});
+    // #endregion
 
     // 如果出现异常，返回测试数据
     const { traceCode } = req.body || {};
