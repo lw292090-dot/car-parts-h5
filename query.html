@@ -629,7 +629,7 @@
       showLoading();
 
       try {
-        const response = await fetch(`${API_BASE_URL}/api/test`, {
+        const response = await fetch(`${API_BASE_URL}/api/query`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -673,7 +673,7 @@
     // 检查API可用性
     async function checkApiHealth() {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/test`, {
+        const response = await fetch(`${API_BASE_URL}/api/query`, {
           method: 'OPTIONS'
         });
         return response.ok;
