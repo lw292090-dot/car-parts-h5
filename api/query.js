@@ -2,17 +2,25 @@ export default async function handler(req, res) {
   // 设置CORS头，允许所有域名访问
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+  console.log('API请求方法:', req.method);
+  console.log('API请求头:', req.headers);
 
   // 处理预检请求
   if (req.method === 'OPTIONS') {
+    console.log('处理OPTIONS预检请求');
     res.status(200).end();
     return;
   }
 
   // 只允许POST请求
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    console.log('不支持的请求方法:', req.method);
+    return res.status(405).json({
+      error: 'Method not allowed',
+      message: `Method ${req.method} is not allowed. Only POST is supported.`
+    });
   }
 
   try {
