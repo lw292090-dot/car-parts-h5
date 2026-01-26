@@ -522,16 +522,18 @@
     <div class="preview-close">×</div>
   </div>
 
+  <!-- 云开发 Web SDK v2 -->
+  <script src="https://static.cloudbase.net/cloudbase-js-sdk/latest/cloudbase.full.js"></script>
   <script>
     // ============ 配置区域 ============
     // 云开发环境ID
     const ENV_ID = 'cloudbase-8gvr5ezca651849d';
     const PUBLIC_KEY = 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjlkMWRjMzFlLWI0ZDAtNDQ4Yi1hNzZmLWIwY2M2M2Q4MTQ5OCJ9.eyJpc3MiOiJodHRwczovL2Nsb3VkYmFzZS04Z3ZyNWV6Y2E2NTE4NDlkLmFwLXNoYW5naGFpLnRjYi1hcGkudGVuY2VudGNsb3VkYXBpLmNvbSIsInN1YiI6ImFub24iLCJhdWQiOiJjbG91ZGJhc2UtOGd2cjVlemNhNjUxODQ5ZCIsImV4cCI6NDA3MTg2NDMyMSwiaWF0IjoxNzY4MTgxMTIxLCJub25jZSI6ImpSQU5INVhXUnJpRVUwTGxOaUdxRmciLCJhdF9oYXNoIjoialJBTkg1WFdScmlFVTBMbE5pR3FGZyIsIm5hbWUiOiJBbm9ueW1vdXMiLCJzY29wZSI6ImFub255bW91cyIsInByb2plY3RfaWQiOiJjbG91ZGJhc2UtOGd2cjVlemNhNjUxODQ5ZCIsInVzZXJfdHlwZSI6IiIsImNsaWVudF90eXBlIjoiY2xpZW50X3VzZXIiLCJpc19zeXN0ZW1fYWRtaW4iOmZhbHNlfQ.a4jxAwS2PBLlBYBkRQYfItebJY_SV2pkINsiBWbLESiBJyk2IxtjHeDPJrzwRC4j4DR1BJRasKxYxIvImX-rUQthBeDzi59nL2N5YkU9w_I5RkB_qX1bIkXMbAZcDnyHTOzG3sQmXg9Ow3YFBA86XE7zAbcM6jIZVgIqbykasvYjDMsZ1pG_ycYoX8offyiIxCeZn9ddjI0UKjeszaGZzrexg0b4G1-q59bCKOvs_ccM9MDBGGaUiY9kktHczSaM3npQWjr2pwTsRQuUoAUUifhMX9eLRFwljXIIwo2EwZ0axeeCh-MViFOAQuNJ30FEsls0k1A2pW89oO0fwA5w0w'
     // ==================================
-
+    
     // 云开发实例
     let app = null;
-
+    
     // 初始化云开发并匿名登录
     async function initCloudbase() {
       try {
@@ -541,32 +543,32 @@
           accessKey: PUBLIC_KEY
         });
         console.log('云开发初始化成功');
-
+        
         // 匿名登录
         const auth = app.auth();
         await auth.signInAnonymously();
         console.log('匿名登录成功');
-
+        
         return true;
       } catch (error) {
         console.error('云开发初始化或登录失败:', error);
         return false;
       }
     }
-
+    
     // 获取URL参数
     function getUrlParam(name) {
       const urlParams = new URLSearchParams(window.location.search);
       return urlParams.get(name);
     }
-
+    
     // 显示加载
     function showLoading() {
       document.getElementById('loadingWrap').classList.remove('hidden');
       document.getElementById('errorWrap').classList.add('hidden');
       document.getElementById('resultWrap').classList.add('hidden');
     }
-
+    
     // 显示错误
     function showError(title, desc) {
       document.getElementById('loadingWrap').classList.add('hidden');
@@ -575,20 +577,20 @@
       document.getElementById('errorTitle').textContent = title;
       document.getElementById('errorDesc').textContent = desc;
     }
-
+    
     // 显示结果
-    async function showResult(data) {
+    function showResult(data) {
       document.getElementById('loadingWrap').classList.add('hidden');
       document.getElementById('errorWrap').classList.add('hidden');
       document.getElementById('resultWrap').classList.remove('hidden');
-
+      
       const { codeInfo, partInfo, queryCount, isFirstQuery } = data;
-
+      
       // 溯源码信息
       document.getElementById('traceCode').textContent = codeInfo.code || '-';
       document.getElementById('queryCount').textContent = queryCount || 0;
       document.getElementById('queryStatus').textContent = isFirstQuery ? '首次' : '再次';
-
+      
       // 配件信息
       document.getElementById('partName').textContent = partInfo.name || '-';
       document.getElementById('partBrand').textContent = partInfo.brand || '-';
@@ -596,72 +598,30 @@
       document.getElementById('partOeCodes').textContent = partInfo.oeCodes || '-';
       document.getElementById('partManufactureDate').textContent = partInfo.manufactureDate || '-';
       document.getElementById('partShipmentDate').textContent = partInfo.shipmentDate || '-';
-
-      // 产品图片 - 需要将cloud://协议转换为HTTP URL
+      
+      // 产品图片（云函数已转换为HTTP链接）
       const imagesGrid = document.getElementById('imagesGrid');
       const imagesSection = document.getElementById('imagesSection');
       imagesGrid.innerHTML = '';
-
+      
       if (partInfo.images && partInfo.images.length > 0) {
         imagesSection.classList.remove('hidden');
-
-        // 批量转换云存储URL为HTTP临时链接
-        try {
-          const cloudUrls = partInfo.images.filter(url => url && url.startsWith('cloud://'));
-          const httpUrls = partInfo.images.filter(url => url && !url.startsWith('cloud://'));
-
-          console.log('云存储图片:', cloudUrls);
-          console.log('HTTP图片:', httpUrls);
-
-          if (cloudUrls.length > 0) {
-            // 构建fileList参数
-            const fileList = cloudUrls.map(url => ({
-              fileID: url,
-              maxAge: 7200 // 2小时有效期
-            }));
-
-            console.log('请求临时链接:', fileList);
-
-            const tempUrlResult = await app.getTempFileURL({
-              fileList: fileList
-            });
-
-            console.log('临时链接结果:', tempUrlResult);
-
-            if (tempUrlResult.fileList) {
-              tempUrlResult.fileList.forEach(item => {
-                if (item.tempFileURL) {
-                  httpUrls.push(item.tempFileURL);
-                }
-              });
-            }
+        partInfo.images.forEach(function(url) {
+          if (url) {
+            const img = document.createElement('img');
+            img.className = 'product-img';
+            img.src = url;
+            img.onclick = function() { previewImage(url); };
+            imagesGrid.appendChild(img);
           }
-
-          console.log('最终图片URLs:', httpUrls);
-
-          // 显示所有图片
-          if (httpUrls.length > 0) {
-            httpUrls.forEach(function(url) {
-              const img = document.createElement('img');
-              img.className = 'product-img';
-              img.src = url;
-              img.onclick = function() { previewImage(url); };
-              imagesGrid.appendChild(img);
-            });
-          } else {
-            imagesSection.classList.add('hidden');
-          }
-        } catch (err) {
-          console.error('转换图片URL失败:', err);
-          imagesSection.classList.add('hidden');
-        }
+        });
       } else {
         imagesSection.classList.add('hidden');
       }
-
+      
       // 查询时间
       const now = new Date();
-      const timeStr = now.getFullYear() + '-' +
+      const timeStr = now.getFullYear() + '-' + 
         String(now.getMonth() + 1).padStart(2, '0') + '-' +
         String(now.getDate()).padStart(2, '0') + ' ' +
         String(now.getHours()).padStart(2, '0') + ':' +
@@ -670,31 +630,31 @@
       document.getElementById('queryTime').textContent = '查询时间: ' + timeStr;
       document.getElementById('queryId').textContent = 'ID: ' + Math.random().toString(36).substr(2, 9).toUpperCase();
     }
-
+    
     // 图片预览
     function previewImage(url) {
       document.getElementById('previewImg').src = url;
       document.getElementById('previewMask').classList.remove('hidden');
     }
-
+    
     function closePreview() {
       document.getElementById('previewMask').classList.add('hidden');
     }
-
+    
     // 查询配件信息
     async function queryPart(traceCode) {
       showLoading();
-
+      
       try {
         const result = await app.callFunction({
           name: 'queryPart',
           data: { traceCode: traceCode }
         });
-
+        
         console.log('云函数返回:', result);
-
+        
         if (result.result && result.result.code === 0) {
-          await showResult(result.result.data);
+          showResult(result.result.data);
         } else {
           const msg = result.result?.message || '查询失败';
           if (msg.indexOf('不存在') > -1) {
@@ -710,7 +670,7 @@
         showError('网络错误', '请检查网络连接后刷新页面重试');
       }
     }
-
+    
     // 显示输入框
     function showInput() {
       document.getElementById('inputWrap').classList.remove('hidden');
@@ -718,32 +678,32 @@
       document.getElementById('errorWrap').classList.add('hidden');
       document.getElementById('resultWrap').classList.add('hidden');
     }
-
+    
     // 手动查询
     async function manualQuery() {
       const input = document.getElementById('codeInput');
       const code = input.value.trim().toUpperCase();
-
+      
       if (!code) {
         alert('请输入溯源码');
         return;
       }
-
+      
       // 校验溯源码格式
       const codePattern = /^CK\d{10}$/;
       if (!codePattern.test(code)) {
         alert('溯源码格式不正确，请输入CK开头的12位溯源码');
         return;
       }
-
+      
       // 更新URL（方便分享）
       const newUrl = window.location.pathname + '?code=' + code;
       window.history.pushState({}, '', newUrl);
-
+      
       // 查询
       queryPart(code);
     }
-
+    
     // 监听输入框回车
     document.addEventListener('DOMContentLoaded', function() {
       const input = document.getElementById('codeInput');
@@ -755,11 +715,11 @@
         });
       }
     });
-
+    
     // 页面加载
     window.onload = async function() {
       const code = getUrlParam('code');
-
+      
       // 如果没有code参数，显示输入框
       if (!code) {
         // 先初始化云开发
@@ -771,21 +731,21 @@
         showInput();
         return;
       }
-
+      
       // 校验溯源码格式
       const codePattern = /^CK\d{10}$/;
       if (!codePattern.test(code)) {
         showError('无法识别', '该二维码不是有效的溯源码');
         return;
       }
-
+      
       // 初始化云开发
       const initSuccess = await initCloudbase();
       if (!initSuccess) {
         showError('初始化失败', '云服务初始化失败，请刷新页面重试');
         return;
       }
-
+      
       queryPart(code);
     };
   </script>
