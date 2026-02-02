@@ -531,31 +531,27 @@
     const PUBLIC_KEY = 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjlkMWRjMzFlLWI0ZDAtNDQ4Yi1hNzZmLWIwY2M2M2Q4MTQ5OCJ9.eyJpc3MiOiJodHRwczovL2Nsb3VkYmFzZS04Z21oZ28zaDVhOWM5MGY5LmFwLXNoYW5naGFpLnRjYi1hcGkudGVuY2VudGNsb3VkYXBpLmNvbSIsInN1YiI6ImFub24iLCJhdWQiOiJjbG91ZGJhc2UtOGdtaGdvM2g1YTljOTBmOSIsImV4cCI6NDA3MzA5MjE5NywiaWF0IjoxNzY5NDA4OTk3LCJub25jZSI6IlNnaWhwYklUU2VTXzFRZnVZSU9fSmciLCJhdF9oYXNoIjoiU2dpaHBiSVRTZVNfMVFmdVlJT19KZyIsIm5hbWUiOiJBbm9ueW1vdXMiLCJzY29wZSI6ImFub255bW91cyIsInByb2plY3RfaWQiOiJjbG91ZGJhc2UtOGdtaGdvM2g1YTljOTBmOSIsInVzZXJfdHlwZSI6IiIsImNsaWVudF90eXBlIjoiY2xpZW50X3VzZXIiLCJpc19zeXN0ZW1fYWRtaW4iOmZhbHNlfQ.JVOJ6DRC07j-nlykVFbFTtM_PgJFeJSUxSQEz6HRHx1qbtzYoHHHDTzjLL_YhlUUhcUruduVWMiHT4mho55kCrUXvh2Ou7Jbmm9xVXHlo3pF9Tmxb2-d_4jQ1zirnr-4IrJxV8NFbkNSXXfm7yyNDJPVQj7m1Jn9qxRyedACQMa76h-tQpYn-CIOIMv4Q5twNcS6FLJJBt2dk5jOfCUF2CxteqD6-yyYO3PcMi-CSxthw1hIt5Q91fQiGofNSvYABw25GE7ofX0gA9Le5TAt-2xBxDBDo9ac3OMIo5vmO3WtRhffVmXETBpkq_zmMFy6zfatjGdgW-AbT4ZT3dp6mQ';
     // ==================================
 
-    // 云开发应用实例
+    // 云开发实例
     let app = null;
 
-    /**
-     * 初始化云开发 SDK
-     * @returns {Promise<boolean>} 初始化是否成功
-     */
-    async function initCloudBase() {
+    // 初始化云开发并匿名登录
+    async function initCloudbase() {
       try {
-        // 初始化云开发应用
+        // 初始化SDK
         app = cloudbase.init({
           env: ENV_ID,
-          anonymous: true
+          accessKey: PUBLIC_KEY
         });
+        console.log('云开发初始化成功');
 
-        // 使用公钥进行匿名登录
-        const auth = app.auth({
-          persistence: 'local'
-        });
+        // 匿名登录
+        const auth = app.auth();
+        await auth.signInAnonymously();
+        console.log('匿名登录成功');
 
-        await auth.signInWithTicket(PUBLIC_KEY);
-        console.log('云开发 SDK 初始化成功');
         return true;
       } catch (error) {
-        console.error('云开发 SDK 初始化失败:', error);
+        console.error('云开发初始化或登录失败:', error);
         return false;
       }
     }
@@ -655,7 +651,7 @@
       try {
         // 确保 SDK 已初始化
         if (!app) {
-          const initialized = await initCloudBase();
+          const initialized = await initCloudbase();
           if (!initialized) {
             throw new Error('云开发 SDK 初始化失败');
           }
@@ -744,7 +740,7 @@
     // 页面加载
     window.onload = async function() {
       // 先初始化云开发 SDK
-      const initialized = await initCloudBase();
+      const initialized = await initCloudbase();
       if (!initialized) {
         showError('初始化失败', '云开发 SDK 初始化失败，请刷新页面重试');
         return;
