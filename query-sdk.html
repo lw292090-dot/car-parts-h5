@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>防伪查询结果</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #1A1D23;
+      min-height: 100vh;
+      color: #E5E7EB;
+    }
+
+    .container {
+      padding: 20px 12px 40px;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    /* 页面标题 */
+    .page-header {
+      text-align: center;
+      padding: 20px 0 24px;
+    }
+
+    .page-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #FFFFFF;
+    }
+
+    /* 加载状态 */
+    .loading-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 100px 20px;
+    }
+
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(255,255,255,0.1);
+      border-top-color: #10B981;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      margin-top: 16px;
+      color: #8A8F98;
+      font-size: 14px;
+    }
+
+    /* 错误状态 */
+    .error-wrap {
+      text-align: center;
+      padding: 80px 20px;
+    }
+
+    .error-icon {
+      font-size: 60px;
+      margin-bottom: 20px;
+    }
+
+    .error-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #FFFFFF;
+      margin-bottom: 12px;
+    }
+
+    .error-desc {
+      font-size: 14px;
+      color: #8A8F98;
+      line-height: 1.6;
+    }
+
+    /* 认证状态卡片 */
+    .status-card {
+      display: flex;
+      align-items: center;
+      background: linear-gradient(135deg, #00C853 0%, #00A86B 100%);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 4px 12px rgba(0, 168, 107, 0.3);
+    }
+
+    .status-icon {
+      width: 44px;
+      height: 44px;
+      background: rgba(255, 255, 255, 0.25);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 14px;
+      flex-shrink: 0;
+    }
+
+    .check-mark {
+      font-size: 24px;
+      color: #FFFFFF;
+    }
+
+    .status-info {
+      flex: 1;
+    }
+
+    .status-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #FFFFFF;
+      margin-bottom: 4px;
+    }
+
+    .status-desc {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.85);
+    }
+
+    /* 溯源码信息条 */
+    .trace-bar {
+      background: #252A33;
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .trace-code-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      margin-bottom: 12px;
+    }
+
+    .trace-label {
+      font-size: 13px;
+      color: #8A8F98;
+    }
+
+    .trace-code {
+      font-size: 14px;
+      font-weight: 600;
+      color: #10B981;
+      font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
+      background: rgba(16, 185, 129, 0.12);
+      padding: 4px 10px;
+      border-radius: 6px;
+    }
+
+    .trace-stats {
+      display: flex;
+      align-items: center;
+    }
+
+    .stat-item {
+      flex: 1;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: #FFFFFF;
+      margin-bottom: 2px;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: #6B7280;
+    }
+
+    .stat-divider {
+      width: 1px;
+      height: 30px;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    /* 配件信息卡片 */
+    .info-card {
+      background: #252A33;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .card-header {
+      padding: 12px 14px;
+      background: rgba(255, 255, 255, 0.08);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .card-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #E5E7EB;
+    }
+
+    .info-list {
+      padding: 4px 0;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .info-row:last-child {
+      border-bottom: none;
+    }
+
+    .info-label {
+      font-size: 14px;
+      color: #8A8F98;
+    }
+
+    .info-value {
+      font-size: 14px;
+      color: #E5E7EB;
+      font-weight: 500;
+      text-align: right;
+      max-width: 60%;
+      word-break: break-all;
+    }
+
+    .info-value.highlight {
+      color: #10B981;
+      font-weight: 600;
+    }
+
+    /* 产品图片 */
+    .images-section {
+      padding: 12px 14px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .images-title {
+      font-size: 13px;
+      color: #8A8F98;
+      margin-bottom: 10px;
+    }
+
+    .images-grid {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    .product-img {
+      width: 80px;
+      height: 80px;
+      border-radius: 8px;
+      object-fit: cover;
+      background: #1A1D23;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+
+    /* 查询记录 */
+    .query-record {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 4px;
+      font-size: 11px;
+      color: #4B5563;
+    }
+
+    /* 底部提示 */
+    .footer-tip {
+      text-align: center;
+      padding: 20px;
+      font-size: 12px;
+      color: #4B5563;
+    }
+
+    /* 隐藏元素 */
+    .hidden {
+      display: none !important;
+    }
+
+    /* 图片预览遮罩 */
+    .preview-mask {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.95);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .preview-img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    .preview-close {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      width: 40px;
+      height: 40px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      color: #FFFFFF;
+      cursor: pointer;
+    }
+
+    /* 手动输入区域 */
+    .input-wrap {
+      padding: 60px 20px;
+      text-align: center;
+    }
+
+    .input-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #FFFFFF;
+      margin-bottom: 8px;
+    }
+
+    .input-desc {
+      font-size: 14px;
+      color: #8A8F98;
+      margin-bottom: 24px;
+    }
+
+    .input-box {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .code-input {
+      flex: 1;
+      height: 48px;
+      background: #252A33;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 0 16px;
+      font-size: 16px;
+      color: #FFFFFF;
+      outline: none;
+      text-transform: uppercase;
+    }
+
+    .code-input::placeholder {
+      color: #6B7280;
+    }
+
+    .code-input:focus {
+      border-color: #10B981;
+    }
+
+    .query-btn {
+      height: 48px;
+      padding: 0 20px;
+      background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      color: #FFFFFF;
+      cursor: pointer;
+    }
+
+    .query-btn:active {
+      opacity: 0.9;
+    }
+
+    .input-tip {
+      font-size: 12px;
+      color: #6B7280;
+      margin-top: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="page-header">
+      <div class="page-title">防伪查询结果</div>
+    </div>
+
+    <!-- 手动输入区域 -->
+    <div id="inputWrap" class="input-wrap hidden">
+      <div class="input-title">配件防伪查询</div>
+      <div class="input-desc">请输入溯源码进行查询</div>
+      <div class="input-box">
+        <input type="text" id="codeInput" class="code-input" placeholder="请输入溯源码，如CK2601974214" maxlength="12">
+        <button class="query-btn" onclick="manualQuery()">查询</button>
+      </div>
+      <div class="input-tip">溯源码格式：CK + 10位数字</div>
+    </div>
+
+    <!-- 加载状态 -->
+    <div id="loadingWrap" class="loading-wrap hidden">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">正在查询中...</div>
+    </div>
+
+    <!-- 错误状态 -->
+    <div id="errorWrap" class="error-wrap hidden">
+      <div class="error-icon">⚠️</div>
+      <div class="error-title" id="errorTitle">查询失败</div>
+      <div class="error-desc" id="errorDesc">请检查溯源码是否正确</div>
+    </div>
+
+    <!-- 查询结果 -->
+    <div id="resultWrap" class="hidden">
+      <!-- 认证状态 -->
+      <div class="status-card">
+        <div class="status-icon">
+          <span class="check-mark">✓</span>
+        </div>
+        <div class="status-info">
+          <div class="status-title">正品认证通过</div>
+          <div class="status-desc">该配件经系统核验为正品</div>
+        </div>
+      </div>
+
+      <!-- 溯源码信息 -->
+      <div class="trace-bar">
+        <div class="trace-code-row">
+          <span class="trace-label">溯源码</span>
+          <span class="trace-code" id="traceCode">-</span>
+        </div>
+        <div class="trace-stats">
+          <div class="stat-item">
+            <div class="stat-value" id="queryCount">0</div>
+            <div class="stat-label">查询次数</div>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <div class="stat-value" id="queryStatus">首次</div>
+            <div class="stat-label">查询状态</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 配件信息 -->
+      <div class="info-card">
+        <div class="card-header">
+          <div class="card-title">配件信息</div>
+        </div>
+        <div class="info-list">
+          <div class="info-row">
+            <span class="info-label">配件名称</span>
+            <span class="info-value highlight" id="partName">-</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">车牌号</span>
+            <span class="info-value" id="partBrand">-</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">VIN码</span>
+            <span class="info-value" id="partVinCode">-</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">品质</span>
+            <span class="info-value" id="partQuality">-</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">OE号</span>
+            <span class="info-value" id="partOeCodes">-</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">出厂日期</span>
+            <span class="info-value" id="partManufactureDate">-</span>
+          </div>
+        </div>
+
+        <!-- 产品图片 -->
+        <div class="images-section" id="imagesSection">
+          <div class="images-title">产品实拍</div>
+          <div class="images-grid" id="imagesGrid"></div>
+        </div>
+      </div>
+
+      <!-- 查询记录 -->
+      <div class="query-record">
+        <span id="queryTime">查询时间: -</span>
+        <span id="queryId">ID: -</span>
+      </div>
+    </div>
+
+    <div class="footer-tip">— 配件防伪溯源系统 —</div>
+  </div>
+
+  <!-- 图片预览 -->
+  <div id="previewMask" class="preview-mask hidden" onclick="closePreview()">
+    <img id="previewImg" class="preview-img" src="" alt="预览">
+    <div class="preview-close">×</div>
+  </div>
+
+  <!-- 云开发 JS SDK -->
+  <script src="https://static.cloudbase.net/cloudbase-js-sdk/latest/cloudbase.full.js"></script>
+  <script>
+    // ============ 配置区域 ============
+    // 云开发环境ID
+    const ENV_ID = 'cloudbase-8gmhgo3h5a9c90f9';
+    const PUBLIC_KEY = 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjlkMWRjMzFlLWI0ZDAtNDQ4Yi1hNzZmLWIwY2M2M2Q4MTQ5OCJ9.eyJpc3MiOiJodHRwczovL2Nsb3VkYmFzZS04Z21oZ28zaDVhOWM5MGY5LmFwLXNoYW5naGFpLnRjYi1hcGkudGVuY2VudGNsb3VkYXBpLmNvbSIsInN1YiI6ImFub24iLCJhdWQiOiJjbG91ZGJhc2UtOGdtaGdvM2g1YTljOTBmOSIsImV4cCI6NDA3MzA5MjE5NywiaWF0IjoxNzY5NDA4OTk3LCJub25jZSI6IlNnaWhwYklUU2VTXzFRZnVZSU9fSmciLCJhdF9oYXNoIjoiU2dpaHBiSVRTZVNfMVFmdVlJT19KZyIsIm5hbWUiOiJBbm9ueW1vdXMiLCJzY29wZSI6ImFub255bW91cyIsInByb2plY3RfaWQiOiJjbG91ZGJhc2UtOGdtaGdvM2g1YTljOTBmOSIsInVzZXJfdHlwZSI6IiIsImNsaWVudF90eXBlIjoiY2xpZW50X3VzZXIiLCJpc19zeXN0ZW1fYWRtaW4iOmZhbHNlfQ.JVOJ6DRC07j-nlykVFbFTtM_PgJFeJSUxSQEz6HRHx1qbtzYoHHHDTzjLL_YhlUUhcUruduVWMiHT4mho55kCrUXvh2Ou7Jbmm9xVXHlo3pF9Tmxb2-d_4jQ1zirnr-4IrJxV8NFbkNSXXfm7yyNDJPVQj7m1Jn9qxRyedACQMa76h-tQpYn-CIOIMv4Q5twNcS6FLJJBt2dk5jOfCUF2CxteqD6-yyYO3PcMi-CSxthw1hIt5Q91fQiGofNSvYABw25GE7ofX0gA9Le5TAt-2xBxDBDo9ac3OMIo5vmO3WtRhffVmXETBpkq_zmMFy6zfatjGdgW-AbT4ZT3dp6mQ';
+    // ==================================
+
+    // 云开发应用实例
+    let app = null;
+
+    /**
+     * 初始化云开发 SDK
+     * @returns {Promise<boolean>} 初始化是否成功
+     */
+    async function initCloudBase() {
+      try {
+        // 初始化云开发应用
+        app = cloudbase.init({
+          env: ENV_ID,
+          anonymous: true
+        });
+
+        // 使用公钥进行匿名登录
+        const auth = app.auth({
+          persistence: 'local'
+        });
+
+        await auth.signInWithTicket(PUBLIC_KEY);
+        console.log('云开发 SDK 初始化成功');
+        return true;
+      } catch (error) {
+        console.error('云开发 SDK 初始化失败:', error);
+        return false;
+      }
+    }
+
+    // 获取URL参数
+    function getUrlParam(name) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(name);
+    }
+
+    // 显示加载
+    function showLoading() {
+      document.getElementById('loadingWrap').classList.remove('hidden');
+      document.getElementById('errorWrap').classList.add('hidden');
+      document.getElementById('resultWrap').classList.add('hidden');
+    }
+
+    // 显示错误
+    function showError(title, desc) {
+      document.getElementById('loadingWrap').classList.add('hidden');
+      document.getElementById('errorWrap').classList.remove('hidden');
+      document.getElementById('resultWrap').classList.add('hidden');
+      document.getElementById('errorTitle').textContent = title;
+      document.getElementById('errorDesc').textContent = desc;
+    }
+
+    // 显示结果
+    function showResult(data) {
+      document.getElementById('loadingWrap').classList.add('hidden');
+      document.getElementById('errorWrap').classList.add('hidden');
+      document.getElementById('resultWrap').classList.remove('hidden');
+
+      const { codeInfo, partInfo, queryCount, isFirstQuery } = data;
+
+      // 溯源码信息
+      document.getElementById('traceCode').textContent = codeInfo.code || '-';
+      document.getElementById('queryCount').textContent = queryCount || 0;
+      document.getElementById('queryStatus').textContent = isFirstQuery ? '首次' : '再次';
+
+      // 配件信息
+      document.getElementById('partName').textContent = partInfo.name || '-';
+      document.getElementById('partBrand').textContent = partInfo.brand || '-';
+      document.getElementById('partVinCode').textContent = partInfo.vinCode || '-';
+      document.getElementById('partQuality').textContent = partInfo.quality || '-';
+      document.getElementById('partOeCodes').textContent = partInfo.oeCodes || '-';
+      document.getElementById('partManufactureDate').textContent = partInfo.manufactureDate || '-';
+
+      // 产品图片（云函数已转换为HTTP链接）
+      const imagesGrid = document.getElementById('imagesGrid');
+      const imagesSection = document.getElementById('imagesSection');
+      imagesGrid.innerHTML = '';
+
+      if (partInfo.images && partInfo.images.length > 0) {
+        imagesSection.classList.remove('hidden');
+        partInfo.images.forEach(function(url) {
+          if (url) {
+            const img = document.createElement('img');
+            img.className = 'product-img';
+            img.src = url;
+            img.onclick = function() { previewImage(url); };
+            imagesGrid.appendChild(img);
+          }
+        });
+      } else {
+        imagesSection.classList.add('hidden');
+      }
+
+      // 查询时间
+      const now = new Date();
+      const timeStr = now.getFullYear() + '-' +
+        String(now.getMonth() + 1).padStart(2, '0') + '-' +
+        String(now.getDate()).padStart(2, '0') + ' ' +
+        String(now.getHours()).padStart(2, '0') + ':' +
+        String(now.getMinutes()).padStart(2, '0') + ':' +
+        String(now.getSeconds()).padStart(2, '0');
+      document.getElementById('queryTime').textContent = '查询时间: ' + timeStr;
+      document.getElementById('queryId').textContent = 'ID: ' + Math.random().toString(36).substr(2, 9).toUpperCase();
+    }
+
+    // 图片预览
+    function previewImage(url) {
+      document.getElementById('previewImg').src = url;
+      document.getElementById('previewMask').classList.remove('hidden');
+    }
+
+    function closePreview() {
+      document.getElementById('previewMask').classList.add('hidden');
+    }
+
+    /**
+     * 使用云函数 SDK 查询配件信息
+     * @param {string} traceCode - 溯源码
+     */
+    async function queryPart(traceCode) {
+      showLoading();
+
+      try {
+        // 确保 SDK 已初始化
+        if (!app) {
+          const initialized = await initCloudBase();
+          if (!initialized) {
+            throw new Error('云开发 SDK 初始化失败');
+          }
+        }
+
+        // 调用云函数
+        const result = await app.callFunction({
+          name: 'queryPart',
+          data: {
+            traceCode: traceCode
+          }
+        });
+
+        console.log('云函数返回:', result);
+
+        // 处理返回结果
+        if (result && result.result) {
+          const response = result.result;
+
+          if (response.code === 0) {
+            showResult(response.data);
+          } else {
+            const msg = response.message || '查询失败';
+            if (msg.indexOf('不存在') > -1) {
+              showError('溯源码不存在', '该溯源码不存在，请检查是否正确或联系客服');
+            } else if (msg.indexOf('未绑定') > -1) {
+              showError('配件未绑定', '该溯源码尚未绑定配件信息，请联系商家');
+            } else {
+              showError('查询失败', msg);
+            }
+          }
+        } else {
+          throw new Error('云函数返回数据格式异常');
+        }
+      } catch (error) {
+        console.error('查询失败:', error);
+        showError('网络错误', '请检查网络连接后刷新页面重试。错误信息: ' + error.message);
+      }
+    }
+
+    // 显示输入框
+    function showInput() {
+      document.getElementById('inputWrap').classList.remove('hidden');
+      document.getElementById('loadingWrap').classList.add('hidden');
+      document.getElementById('errorWrap').classList.add('hidden');
+      document.getElementById('resultWrap').classList.add('hidden');
+    }
+
+    // 手动查询
+    async function manualQuery() {
+      const input = document.getElementById('codeInput');
+      const code = input.value.trim().toUpperCase();
+
+      if (!code) {
+        alert('请输入溯源码');
+        return;
+      }
+
+      // 校验溯源码格式
+      const codePattern = /^CK\d{10}$/;
+      if (!codePattern.test(code)) {
+        alert('溯源码格式不正确，请输入CK开头的12位溯源码');
+        return;
+      }
+
+      // 更新URL（方便分享）
+      const newUrl = window.location.pathname + '?code=' + code;
+      window.history.pushState({}, '', newUrl);
+
+      // 查询
+      queryPart(code);
+    }
+
+    // 监听输入框回车
+    document.addEventListener('DOMContentLoaded', function() {
+      const input = document.getElementById('codeInput');
+      if (input) {
+        input.addEventListener('keypress', function(e) {
+          if (e.key === 'Enter') {
+            manualQuery();
+          }
+        });
+      }
+    });
+
+    // 页面加载
+    window.onload = async function() {
+      // 先初始化云开发 SDK
+      const initialized = await initCloudBase();
+      if (!initialized) {
+        showError('初始化失败', '云开发 SDK 初始化失败，请刷新页面重试');
+        return;
+      }
+
+      const code = getUrlParam('code');
+
+      // 如果没有code参数，显示输入框
+      if (!code) {
+        showInput();
+        return;
+      }
+
+      // 校验溯源码格式
+      const codePattern = /^CK\d{10}$/;
+      if (!codePattern.test(code)) {
+        showError('无法识别', '该二维码不是有效的溯源码');
+        return;
+      }
+
+      queryPart(code);
+    };
+  </script>
+</body>
+</html>
