@@ -563,13 +563,61 @@
       document.getElementById('queryCount').textContent = queryCount || 0;
       document.getElementById('queryStatus').textContent = isFirstQuery ? '首次' : '再次';
       
-      // 配件信息
-      document.getElementById('partName').textContent = partInfo.name || '-';
-      document.getElementById('partBrand').textContent = partInfo.brand || '-';
-      document.getElementById('partVinCode').textContent = partInfo.vinCode || '-';
-      document.getElementById('partQuality').textContent = partInfo.quality || '-';
-      document.getElementById('partOeCodes').textContent = partInfo.oeCodes || '-';
-      document.getElementById('partManufactureDate').textContent = partInfo.manufactureDate || '-';
+      // 配件信息 - 动态构建info-list
+      const infoList = document.querySelector('.info-list');
+      infoList.innerHTML = '';
+      
+      // 配件名称 - 必显示
+      infoList.innerHTML += `
+        <div class="info-row">
+          <span class="info-label">配件名称</span>
+          <span class="info-value highlight">${partInfo.name || '-'}</span>
+        </div>
+      `;
+      
+      // 车牌号 - 只在有值时显示
+      if (partInfo.brand) {
+        infoList.innerHTML += `
+          <div class="info-row">
+            <span class="info-label">车牌号</span>
+            <span class="info-value">${partInfo.brand}</span>
+          </div>
+        `;
+      }
+      
+      // VIN码 - 只在有值时显示
+      if (partInfo.vinCode) {
+        infoList.innerHTML += `
+          <div class="info-row">
+            <span class="info-label">VIN码</span>
+            <span class="info-value">${partInfo.vinCode}</span>
+          </div>
+        `;
+      }
+      
+      // 品质 - 必显示
+      infoList.innerHTML += `
+        <div class="info-row">
+          <span class="info-label">品质</span>
+          <span class="info-value">${partInfo.quality || '-'}</span>
+        </div>
+      `;
+      
+      // OE号 - 必显示
+      infoList.innerHTML += `
+        <div class="info-row">
+          <span class="info-label">OE号</span>
+          <span class="info-value">${partInfo.oeCodes || '-'}</span>
+        </div>
+      `;
+      
+      // 出厂日期 - 必显示
+      infoList.innerHTML += `
+        <div class="info-row">
+          <span class="info-label">出厂日期</span>
+          <span class="info-value">${partInfo.manufactureDate || '-'}</span>
+        </div>
+      `;
       
       // 产品图片（云函数已转换为HTTP链接）
       const imagesGrid = document.getElementById('imagesGrid');
